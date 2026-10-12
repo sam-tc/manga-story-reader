@@ -45,3 +45,37 @@ if missing_images:
     raise SystemExit("Dataset is incomplete. Restore the missing images.")
 
 print("Every sequence lists 3 pages, and all listed image files exist.")
+
+labels = []
+
+with Path("dataset/development/labels.jsonl").open("r", encoding="utf-8") as file:
+    for line in file:
+        if line.strip():
+            labels.append(json.loads(line))
+
+development_ids = set()
+for sequence in sequences:
+    if sequence["split"] == "development":
+        development_ids.add(sequence["sequence_id"])
+
+label_ids = set()
+for label in labels:
+    sequence_id = label["sequence_id"]
+
+    if sequence_id in label_ids:
+        raise ValueError(f"Duplicate label sequence: {sequence_id}")
+
+    label_ids.add(sequence_id)
+
+    if len(label["pages"]) != 3:
+        raise ValueError(f"{sequence_id} must have labels for exactly 3 pages.")
+
+if label_ids != development_ids:
+    raise ValueError("Development sequence IDs and label IDs do not match.")
+
+print("\nLabelled sequences:", len(labels))
+print("Label IDs match all development sequence IDs.")
+print("Every label record contains 3 page entries.")
+
+print("\nFirst two provided story lines from the first labelled page:")
+print(json.dumps(labels[0]["pages"][0][:2], indent=2))
