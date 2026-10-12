@@ -10,3 +10,4 @@ models/
 checkpoints/
 
 experiments/ocr_cache/
+experiments/validation/validation_references.jsonl
