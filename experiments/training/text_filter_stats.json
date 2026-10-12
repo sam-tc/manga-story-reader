@@ -1,0 +1,7 @@
+{
+  "training_sequences": 64,
+  "positive": 4723,
+  "negative": 633,
+  "uncertain": 1480,
+  "total_detections": 6836
+}
