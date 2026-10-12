@@ -1,0 +1,60 @@
+{
+  "baseline": {
+    "text_order_score": 0.6797559578121396,
+    "balanced_joint_f1": 0.29931233548051034,
+    "speaker_accuracy_on_matched": 0.5308187412242154,
+    "joint_f1": 0.40810203302112563,
+    "matched_token_coverage": 0.7685606979172888
+  },
+  "results": [
+    {
+      "threshold": 0.35,
+      "narration_predictions": 17,
+      "false_on_no_narration_sequences": 6,
+      "balanced_joint_f1": 0.2965228989245606,
+      "text_order_score": 0.6797559578121396,
+      "delta": -0.0027894365559497647
+    },
+    {
+      "threshold": 0.5,
+      "narration_predictions": 14,
+      "false_on_no_narration_sequences": 4,
+      "balanced_joint_f1": 0.29715788968864987,
+      "text_order_score": 0.6797559578121396,
+      "delta": -0.002154445791860471
+    },
+    {
+      "threshold": 0.65,
+      "narration_predictions": 8,
+      "false_on_no_narration_sequences": 1,
+      "balanced_joint_f1": 0.2977667656779775,
+      "text_order_score": 0.6797559578121396,
+      "delta": -0.0015455698025328424
+    },
+    {
+      "threshold": 0.8,
+      "narration_predictions": 6,
+      "false_on_no_narration_sequences": 1,
+      "balanced_joint_f1": 0.29667575359666204,
+      "text_order_score": 0.6797559578121396,
+      "delta": -0.002636581883848299
+    },
+    {
+      "threshold": 0.9,
+      "narration_predictions": 2,
+      "false_on_no_narration_sequences": 0,
+      "balanced_joint_f1": 0.30149399329564847,
+      "text_order_score": 0.6797559578121396,
+      "delta": 0.002181657815138127
+    },
+    {
+      "threshold": 0.95,
+      "narration_predictions": 0,
+      "false_on_no_narration_sequences": 0,
+      "balanced_joint_f1": 0.29931233548051034,
+      "text_order_score": 0.6797559578121396,
+      "delta": 0.0
+    }
+  ],
+  "note": "Exploratory validation tuning; not unseen test performance"
+}
