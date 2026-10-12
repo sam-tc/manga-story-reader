@@ -1,0 +1,39 @@
+{
+  "baseline": {
+    "text_order_score": 0.6797559578121396,
+    "balanced_joint_f1": 0.29931233548051034,
+    "speaker_accuracy_on_matched": 0.5308187412242154,
+    "joint_f1": 0.40810203302112563,
+    "matched_token_coverage": 0.7685606979172888
+  },
+  "variants": {
+    "first_occurrence": {
+      "metrics": {
+        "text_order_score": 0.6797559578121396,
+        "balanced_joint_f1": 0.3012061236378688,
+        "speaker_accuracy_on_matched": 0.5443552950761861,
+        "joint_f1": 0.42072790389906106,
+        "matched_token_coverage": 0.7685606979172888
+      },
+      "diagnostics": {
+        "linked_groups": 363,
+        "speaker_labels_changed": 71,
+        "unlinked_groups": 55
+      }
+    },
+    "balloon_turn": {
+      "metrics": {
+        "text_order_score": 0.6797559578121396,
+        "balanced_joint_f1": 0.28001000166953066,
+        "speaker_accuracy_on_matched": 0.520263798786444,
+        "joint_f1": 0.39984039981229846,
+        "matched_token_coverage": 0.7685606979172888
+      },
+      "diagnostics": {
+        "linked_groups": 363,
+        "speaker_labels_changed": 181,
+        "unlinked_groups": 55
+      }
+    }
+  }
+}
