@@ -32,23 +32,68 @@ def read_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+
 def select_sequences(split):
-    ids = set(read_json(SPLITS / f"{split}_ids.json"))
     manifest = read_json(DATASET / "sequences.json")
+
+    if split == "test":
+        sample_path = DATASET / "sample_submission.jsonl"
+
+        with sample_path.open(encoding="utf-8") as file:
+            sample = [
+                json.loads(line)
+                for line in file
+                if line.strip()
+            ]
+
+        ids = [row["sequence_id"] for row in sample]
+
+        by_id = {
+            item["sequence_id"]: item
+            for item in manifest
+            if item["split"] == "test"
+        }
+
+        if (
+            len(ids) != 15
+            or len(set(ids)) != 15
+            or set(ids) != set(by_id)
+        ):
+            raise RuntimeError(
+                "Official test sequence IDs do not match"
+            )
+
+        return [by_id[sid] for sid in ids]
+
+    ids = set(read_json(SPLITS / f"{split}_ids.json"))
+
     selected = [
         item for item in manifest
         if item["split"] == "development"
         and item["sequence_id"] in ids
     ]
+
     expected = 64 if split == "train" else 16
-    if len(selected) != expected or {s["sequence_id"] for s in selected} != ids:
-        raise RuntimeError(f"Incorrect {split} split: expected {expected} sequences")
+
+    if (
+        len(selected) != expected
+        or {s["sequence_id"] for s in selected} != ids
+    ):
+        raise RuntimeError(
+            f"Incorrect {split} split"
+        )
+
     return selected
+
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--split", choices=("train", "val"), required=True)
+    parser.add_argument(
+        "--split",
+        choices=("train", "val", "test"),
+        required=True,
+    )
     parser.add_argument("--limit", type=int, default=None,
                         help="Process only this many sequences for a smoke test")
     parser.add_argument("--device", default="mps", help="mps or cpu")
