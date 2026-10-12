@@ -1,0 +1,59 @@
+{
+  "baseline": {
+    "text_order_score": 0.6797559578121396,
+    "balanced_joint_f1": 0.29931233548051034,
+    "speaker_accuracy_on_matched": 0.5308187412242154,
+    "joint_f1": 0.40810203302112563,
+    "matched_token_coverage": 0.7685606979172888
+  },
+  "variants": [
+    {
+      "method": "panel_top",
+      "counts": {
+        "changed_sequences": 15,
+        "changed_pages": 20,
+        "displaced_groups": 117
+      },
+      "scores": {
+        "text_order_score": 0.7144961885860459,
+        "balanced_joint_f1": 0.31388851952813335,
+        "speaker_accuracy_on_matched": 0.5259652262389061,
+        "joint_f1": 0.4168510234823789,
+        "matched_token_coverage": 0.7941081092374798
+      },
+      "predictions": "panel_top_predictions.jsonl"
+    },
+    {
+      "method": "panel_center",
+      "counts": {
+        "changed_sequences": 12,
+        "changed_pages": 19,
+        "displaced_groups": 98
+      },
+      "scores": {
+        "text_order_score": 0.7075845505177367,
+        "balanced_joint_f1": 0.307484808313005,
+        "speaker_accuracy_on_matched": 0.5223102324887489,
+        "joint_f1": 0.4110205350915542,
+        "matched_token_coverage": 0.7894653164529921
+      },
+      "predictions": "panel_center_predictions.jsonl"
+    },
+    {
+      "method": "panel_balloon",
+      "counts": {
+        "changed_sequences": 13,
+        "changed_pages": 23,
+        "displaced_groups": 112
+      },
+      "scores": {
+        "text_order_score": 0.7060612793017674,
+        "balanced_joint_f1": 0.31874147877637987,
+        "speaker_accuracy_on_matched": 0.5424131493254996,
+        "joint_f1": 0.42276045900986065,
+        "matched_token_coverage": 0.7859116453380772
+      },
+      "predictions": "panel_balloon_predictions.jsonl"
+    }
+  ]
+}
