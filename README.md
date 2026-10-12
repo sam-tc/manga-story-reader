@@ -1,402 +1,170 @@
 # Manga Story Reader
 
-An OCR-based machine learning pipeline that extracts story text from manga pages, arranges the extracted dialogue in approximate Japanese manga reading order, and assigns speaker labels across a sequence of three consecutive pages.
+This is my submission for the Manga Task. The goal is to read three consecutive manga pages, extract the story text in the correct reading order, and assign a speaker to each line.
 
-The project was developed for **Applied ML Task 2 — The Manga Task**.
+I built a pipeline using OCR, a trained text classifier, and manga panel detection. I also tried different approaches for speaker identification and narration detection to see what actually improved the results.
 
-## 1. Project Overview
+## Approach
 
-The goal of this project is to process manga pages automatically and generate structured story dialogue.
+My pipeline has four main parts.
 
-Given three consecutive manga pages, the system attempts to:
+**1. Text extraction**
 
-- Detect and recognize English text in manga panels.
-- Separate useful story text from sound effects and background text.
-- Combine fragmented OCR detections into readable dialogue.
-- Arrange the extracted text in an approximate manga reading order.
-- Assign consistent speaker labels within the three-page sequence.
-- Export the results in the required JSONL submission format.
+I used RapidOCR to extract text from manga pages. Instead of relying only on full-page OCR, I divided each page into overlapping regions to improve the chances of detecting smaller text.
 
-The system runs locally using open-source OCR models and a trained machine learning classifier. It does not require a hosted AI inference API.
+I also removed duplicate OCR detections caused by overlapping regions.
 
-## 2. Dataset
+**2. Story-text filtering**
 
-The provided dataset contains:
+OCR can detect sound effects, page numbers, labels, and other text that isn't part of the story.
 
-| Split | Sequences | Pages |
+To filter these out, I trained a logistic regression classifier using OCR text and position-based features. The model was trained using the labeled development data and is saved in `models/text_filter.joblib`.
+
+**3. Text grouping and reading order**
+
+OCR often detects separate lines of the same speech balloon as individual pieces of text, so I grouped nearby text fragments together.
+
+My first reading-order method relied mainly on text coordinates. Later, I used a pretrained manga segmentation model to detect panels and speech balloons.
+
+Using panel information improved the reading order, especially on pages where a simple right-to-left coordinate sort was insufficient.
+
+**4. Speaker assignment**
+
+This was the most difficult part of the task.
+
+I initially used alternating speaker labels that remain consistent across the three pages of a sequence. I also experimented with character detection, speech-balloon association, and ResNet18 embeddings to identify characters visually.
+
+However, the visual approaches were not reliable enough to improve the score consistently, so I kept the simpler speaker-assignment method in the selected submission.
+
+## Dataset and Evaluation
+
+The dataset contains 80 labeled development sequences and 15 unlabeled test sequences, with three pages in each sequence.
+
+I split the development data into:
+
+- 64 training sequences
+- 16 validation sequences
+
+I used a fixed random seed of 42 and kept all three pages of each sequence together to avoid data leakage.
+
+I evaluated the different approaches using the official `dataset/score.py` script.
+
+### Validation Results
+
+| Approach | Text Order | Balanced Joint F1 |
 |---|---:|---:|
-| Development | 80 | 240 |
-| Test | 15 | 45 |
-| Total | 95 | 285 |
+| Original grouped OCR pipeline | 0.6798 | 0.2993 |
+| Panel-center ordering | 0.7076 | 0.3075 |
+| Panel-top ordering | **0.7145** | 0.3139 |
+| Panel + balloon ordering | 0.7061 | **0.3187** |
+| Panel-top with narration detection | 0.7145 | 0.3169 |
 
-Every sequence consists of three manga pages.
+I selected **panel-top ordering** for my test submission because it gave the best text-order score while also improving balanced joint F1 over my original pipeline.
 
-The development data includes text and speaker annotations, while the test data is used to generate predictions for submission.
+These results are from the validation split, not the hidden test set.
 
-### Training and validation split
+## Experiments and What I Learned
 
-I created a deterministic split of the development sequences using random seed `42`.
+Some approaches worked better than others.
 
-- **Training:** 64 sequences (192 pages)
-- **Validation:** 16 sequences (48 pages)
+Tiled OCR, text filtering, and text grouping helped improve text extraction. Adding panel detection also gave a noticeable improvement in reading order.
 
-The split is performed at the sequence level so that pages from the same sequence never appear in both training and validation.
+I trained a narration classifier and combined it with visual caption detection. It correctly identified a small amount of narration on validation data, but it made no narration predictions on the test data at the selected threshold. I therefore did not force narration labels into the test submission.
 
-The sequence IDs are saved in:
+I also tried comparing character appearances using pretrained ResNet18 embeddings. The problem was that visually similar characters sometimes received high similarity scores even when they were different people. Using these matches for speaker assignment reduced the validation score.
 
-- `experiments/splits/train_ids.json`
-- `experiments/splits/val_ids.json`
+These experiments helped me understand why manga reading is more complicated than applying OCR to a normal document.
 
-## 3. Methodology
+The experiment scripts and results are included in the repository.
 
-The solution combines pretrained OCR models, a trained text-relevance classifier, and geometric heuristics.
+## Setup
 
-### 3.1 Tiled OCR
+The project was developed on macOS using Python 3.14.8.
 
-I initially tested OCR on entire manga pages, but the results were incomplete because manga images contain small dialogue balloons, irregular text placement, and stylized lettering.
+I used two separate Python environments during development: one for OCR and classification, and another for the YOLO-based vision pipeline.
 
-To improve detection, I divided pages into four overlapping regions and ran **RapidOCR** on each region.
-
-The resulting detections were mapped back to the original image coordinates and deduplicated to remove repeated detections caused by overlapping regions.
-
-RapidOCR uses pretrained models executed locally with ONNX Runtime.
-
-### 3.2 Story Text Filtering
-
-OCR detects more than dialogue. It can also recognize sound effects, signs, and other text that should not necessarily appear in the final story transcription.
-
-To address this, I trained a binary classifier that predicts whether an OCR detection is relevant story text.
-
-The classifier uses:
-
-- OCR-recognized text
-- Word and character features
-- OCR confidence
-- Bounding-box geometry and position
-
-I generated weak training labels by comparing OCR detections against the provided training annotations.
-
-The training process produced:
-
-| Category | Examples |
-|---|---:|
-| Positive story-text examples | 4,723 |
-| Negative examples | 633 |
-| Uncertain examples excluded | 1,480 |
-
-The implementation uses scikit-learn's `DictVectorizer` and `LogisticRegression`.
-
-The trained model is saved at:
-
-`models/text_filter.joblib`
-
-This text filter is the main learned component adapted to the provided manga dataset.
-
-### 3.3 Text Grouping and Reading Order
-
-OCR frequently separates a single sentence into several detections.
-
-I implemented a geometry-based grouping method that combines nearby text fragments using their bounding boxes, vertical alignment, and spacing.
-
-The grouped text is then ordered using approximate right-to-left and top-to-bottom manga reading conventions.
-
-This improved the reading-order validation score considerably compared with the initial OCR baseline.
-
-However, the method does not explicitly detect panels or speech balloons, so unusual panel layouts may still produce incorrect ordering.
-
-### 3.4 Speaker Assignment
-
-The final pipeline uses an alternating two-speaker baseline.
-
-Speaker labels alternate between:
-
-- `character1`
-- `character2`
-
-The assignment continues across all three pages of each sequence rather than restarting for every page.
-
-This approach performed better on the official balanced speaker-aware validation metric than assigning all dialogue to a single speaker.
-
-However, it is important to note that this is **not a visual character-recognition system**. It cannot reliably associate speech balloons with characters or distinguish scenes involving several speakers.
-
-### 3.5 Narration Classification Experiment
-
-I also trained a separate text-based classifier to identify narration.
-
-The model was trained using 58 narration examples and 1,350 other story-text examples from the training split.
-
-Although the classifier identified some narration-like passages, integrating it reduced the official validation score.
-
-Therefore, I preserved the experiment and model for comparison but did not include it in the final inference pipeline.
-
-The experimental model is located at:
-
-`models/narration_detector.joblib`
-
-## 4. Experiments and Results
-
-All reported scores were calculated on the same held-out validation set of 16 development sequences using the official task evaluation script.
-
-| Experiment | Text Order Score | Balanced Joint F1 |
-|---|---:|---:|
-| Initial OCR baseline | 0.4897 | 0.1596 |
-| Learned text filtering | 0.5303 | 0.1790 |
-| Text grouping with one speaker | 0.6798 | 0.2138 |
-| **Two-speaker alternation (selected)** | **0.6798** | **0.2993** |
-| Three-speaker alternation | 0.6798 | 0.2495 |
-| Two-speaker baseline with narration classifier | 0.6798 | 0.2800 |
-
-### Observations
-
-**Text filtering:** Training a classifier to distinguish story text from other OCR detections improved both the text-order score and the balanced joint F1 score.
-
-**Fragment grouping:** Combining nearby OCR detections produced the largest improvement in reading-order performance.
-
-**Speaker assignment:** Alternating two speakers gave the best balanced joint F1 among the tested speaker baselines, although it is not a reliable method of identifying actual characters.
-
-**Narration detection:** The narration experiment did not improve performance, demonstrating the difficulty of identifying narration using text alone.
-
-The selected final pipeline achieved:
-
-- **Text Order Score:** `0.6798`
-- **Balanced Joint F1:** `0.2993`
-- **Joint F1:** `0.4081`
-- **Matched Token Coverage:** `0.7686`
-
-These are validation scores, not hidden test results.
-
-Detailed experiment predictions and evaluation outputs are available in `experiments/validation/`.
-
-## 5. Project Structure
-
-```text
-manga-story-reader/
-│
-├── scripts/
-│   ├── inspect_dataset.py
-│   ├── inspect_labels.py
-│   ├── create_split.py
-│   ├── ocr_probe.py
-│   ├── ocr_tiled_probe.py
-│   ├── batch_ocr.py
-│   ├── train_text_filter.py
-│   ├── evaluate_baseline.py
-│   ├── evaluate_text_filter.py
-│   ├── evaluate_grouping.py
-│   ├── evaluate_speaker_baselines.py
-│   ├── analyze_speaker_errors.py
-│   ├── evaluate_narration.py
-│   └── predict.py
-│
-├── models/
-│   ├── text_filter.joblib
-│   └── narration_detector.joblib
-│
-├── experiments/
-│   ├── splits/
-│   ├── training/
-│   └── validation/
-│
-├── submissions/
-│   └── test_predictions.jsonl
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
-The `dataset/` directory and generated OCR caches are excluded from version control.
-
-## 6. Installation and Setup
-
-### Prerequisites
-
-- Python 3.14.8 (version used for development and testing)
-- Git
-- Internet access for cloning the repository, installing dependencies, and obtaining the provided dataset
-
-The pipeline was developed and tested on macOS.
-
-### Step 1: Clone the repository
+Clone the repository:
 
 ```bash
 git clone https://github.com/sam-tc/manga-story-reader.git
 cd manga-story-reader
 ```
 
-The repository must be accessible to the person cloning it.
-
-### Step 2: Create a virtual environment
+Create both environments:
 
 ```bash
 python3 -m venv .venv
+python3 -m venv ../manga-vision-env
 ```
 
-Activate the environment on macOS or Linux:
+Install dependencies:
 
 ```bash
-source .venv/bin/activate
+.venv/bin/python -m pip install -r requirements.txt
+../manga-vision-env/bin/python -m pip install -r requirements-vision.txt
 ```
 
-### Step 3: Install dependencies
+The pretrained segmentation model is downloaded automatically from Hugging Face when first used.
+
+Place the official dataset inside the `dataset/` folder, preserving the original directory structure and image paths.
+
+Dataset: https://drive.google.com/drive/folders/1UDZ6es3VdDyxd3mEsBQBrrYa7fD2lWYp
+
+## Running Inference
+
+To run the complete pipeline on the test images:
 
 ```bash
-python -m pip install -r requirements.txt
+bash scripts/run_test_inference.sh
 ```
 
-The project uses RapidOCR, ONNX Runtime, NumPy, Pillow, scikit-learn, SciPy, and Joblib.
+This runs manga panel detection first, followed by OCR, text filtering, grouping, reading-order prediction, and speaker assignment.
 
-### Step 4: Add the dataset
+The generated output is saved to:
 
-Download the official task dataset from:
+`submissions/test_predictions_reproduced.jsonl`
 
-https://drive.google.com/drive/folders/1UDZ6es3VdDyxd3mEsBQBrrYa7fD2lWYp
+My selected test predictions are saved in:
 
-Arrange it inside the project as follows:
+`submissions/test_predictions_panel.jsonl`
 
-```text
-dataset/
-├── sequences.json
-├── sample_submission.jsonl
-├── score.py
-├── development/
-│   ├── labels.jsonl
-│   └── images/
-└── test/
-    └── images/
-```
+I tested the launcher on all 15 test sequences and confirmed that it reproduced the selected predictions exactly in my development environment.
 
-Preserve the image paths and filenames from the official dataset.
-
-## 7. Running Inference
-
-### Generate test predictions
-
-Run:
+To run panel-aware validation:
 
 ```bash
-python scripts/predict.py --split test
+.venv/bin/python scripts/predict_panel.py --split val
 ```
 
-The script processes all 15 test sequences and saves the results to:
-
-```text
-submissions/test_predictions.jsonl
-```
-
-### Specify a custom output location
+To try the experimental narration-enabled version:
 
 ```bash
-python scripts/predict.py --split test --output /tmp/manga-test.jsonl
+.venv/bin/python scripts/predict_panel.py --split val --narration
 ```
 
-### Generate validation predictions
+## Submission Format
 
-```bash
-python scripts/predict.py --split val
-```
+The output contains one JSON object per sequence, with three lists representing the three pages.
 
-By default, these predictions are saved to:
+Each text entry contains a `speaker` and `text` field. Character labels are consistent within each three-page sequence, and `NARRATION` is reserved for narrator text.
 
-```text
-experiments/validation/pipeline_predictions.jsonl
-```
+The selected test submission contains 15 sequences, 45 pages, and 419 extracted text entries. I checked the JSONL format, sequence IDs, page counts, and text preservation.
 
-The inference script first checks whether cached OCR results are available. If a cache file does not exist, it runs RapidOCR directly on the corresponding image.
+## Limitations and Future Improvements
 
-The trained text-filter model is loaded from `models/text_filter.joblib`.
+The biggest limitation of my current approach is speaker identification. Alternating speaker labels do not actually recognize which character is speaking, especially when more than two characters appear.
 
-## 8. Output Format
+OCR also struggles with stylized fonts, very small text, some punctuation-only balloons, and complicated page layouts. Narration and internal thoughts are another area where the system needs improvement.
 
-The system generates a JSONL file containing one JSON object per sequence.
+If I continued this project, I would focus on training a model that uses speech-balloon tails, panel information, and character appearances together to identify speakers more accurately. I would also improve recognition of punctuation-only balloons and distinguish narration from internal thoughts more reliably.
 
-Each object includes a `sequence_id` and a `pages` array containing predictions for the three pages.
+## Tools and References
 
-Example:
+- [RapidOCR](https://github.com/RapidAI/RapidOCR) — OCR
+- [scikit-learn](https://scikit-learn.org/) — trained text classifier
+- [Ultralytics](https://github.com/ultralytics/ultralytics) — YOLO inference
+- [Manga Page Element Segmentation](https://huggingface.co/anonimkaq4/manga-page-element-segmentation) — pretrained panel, character, and speech-balloon segmentation
+- [PyTorch](https://pytorch.org/) — character-embedding experiments
+- [YOLO Manga Bubble Detector](https://github.com/ebhon/YOLO-manga-bubble-detector) — experimental balloon and narration detection
 
-```json
-{
-  "sequence_id": "example_sequence",
-  "pages": [
-    [
-      {
-        "speaker": "character1",
-        "text": "Example dialogue."
-      }
-    ],
-    [
-      {
-        "speaker": "character2",
-        "text": "Another dialogue line."
-      }
-    ],
-    []
-  ]
-}
-```
-
-The final test submission contains:
-
-- 15 sequence records
-- 45 pages
-- 419 predicted text entries
-
-The predictions were generated programmatically without manually editing the test outputs.
-
-## 9. Reproducibility
-
-The project includes:
-
-- A deterministic sequence-level training and validation split.
-- Training scripts for the text-relevance classifier.
-- Saved trained model weights.
-- Scripts and outputs for multiple validation experiments.
-- A single inference script for generating final predictions.
-- Pinned dependencies in `requirements.txt`.
-
-I verified that rerunning test inference with the existing OCR cache produced a prediction file identical to the committed submission, as confirmed by matching SHA-256 hashes.
-
-I also verified that fresh OCR extraction works on an official test image without using the saved OCR cache.
-
-A complete reproduction on a separate machine has not yet been tested.
-
-## 10. Limitations
-
-The current approach has several limitations.
-
-**Speaker identification:** The system uses alternating speaker labels rather than identifying characters visually. This can fail when more than two characters are speaking, when one character speaks multiple times consecutively, or when narration is present.
-
-**Reading order:** The geometric ordering algorithm may struggle with complex manga layouts, overlapping balloons, and unusual panel arrangements.
-
-**OCR accuracy:** Small text, stylized fonts, punctuation-only dialogue, and low-quality scans can cause missed or incorrect detections.
-
-**Text filtering:** The classifier is trained using weak labels, so it may retain some sound effects or discard relevant dialogue.
-
-**Narration detection:** The experimental narration classifier did not improve validation performance and was therefore excluded from the final system.
-
-## 11. Future Improvements
-
-Potential improvements include:
-
-- Speech-balloon and panel detection.
-- Speech-balloon tail analysis for identifying speakers.
-- Character detection and visual tracking across pages.
-- Better distinction between narration, thoughts, and dialogue.
-- Reading-order prediction using learned layout features.
-- Stronger handling of manga sound effects and stylized text.
-
-These improvements would need to be evaluated on the same held-out validation set before being incorporated into the final pipeline.
-
-## 12. Tools and References
-
-This project uses the following tools and resources:
-
-- **RapidOCR:** https://github.com/RapidAI/RapidOCR
-- **ONNX Runtime:** https://onnxruntime.ai/
-- **scikit-learn:** https://scikit-learn.org/
-- **NumPy:** https://numpy.org/
-- **Pillow:** https://pillow.readthedocs.io/
-
-The manga images, annotation data, sample submission, and official evaluation script were provided as part of the recruitment task.
-
-The pipeline integrates pretrained OCR with project-specific preprocessing, weak-label construction, text filtering, grouping, evaluation experiments, and inference logic.
+I used AI assistance to help understand some concepts, write and debug code, and plan experiments. I ran the models and experiments locally, checked the outputs, and used the official validation scores to compare approaches.
