@@ -8,3 +8,5 @@ __pycache__/
 dataset/
 models/
 checkpoints/
+
+experiments/ocr_cache/
