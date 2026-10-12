@@ -1,0 +1,232 @@
+[
+  {
+    "tile": "row1_col1",
+    "text": "MEAN FAST BALL!",
+    "confidence": 0.96751
+  },
+  {
+    "tile": "row1_col1",
+    "text": "THGRAFFIT!!",
+    "confidence": 0.95201
+  },
+  {
+    "tile": "row1_col1",
+    "text": "THAT'S THE WAY!",
+    "confidence": 0.92824
+  },
+  {
+    "tile": "row1_col1",
+    "text": "LIKE HE'S",
+    "confidence": 0.9986
+  },
+  {
+    "tile": "row1_col1",
+    "text": "IT LOOKS",
+    "confidence": 0.99952
+  },
+  {
+    "tile": "row1_col1",
+    "text": "R",
+    "confidence": 0.99576
+  },
+  {
+    "tile": "row1_col1",
+    "text": "BEEN",
+    "confidence": 0.99978
+  },
+  {
+    "tile": "row1_col1",
+    "text": "WORKING",
+    "confidence": 0.99995
+  },
+  {
+    "tile": "row1_col1",
+    "text": "HARD FOR",
+    "confidence": 0.96329
+  },
+  {
+    "tile": "row1_col1",
+    "text": "THE FALL",
+    "confidence": 0.94977
+  },
+  {
+    "tile": "row1_col1",
+    "text": "TOURNAMENT.",
+    "confidence": 0.99022
+  },
+  {
+    "tile": "row1_col2",
+    "text": "SNAP",
+    "confidence": 0.99972
+  },
+  {
+    "tile": "row1_col2",
+    "text": "HUH? DOES",
+    "confidence": 0.99826
+  },
+  {
+    "tile": "row1_col2",
+    "text": "KOMABA SEEM",
+    "confidence": 0.99667
+  },
+  {
+    "tile": "row1_col2",
+    "text": "DIFFERENT",
+    "confidence": 0.95966
+  },
+  {
+    "tile": "row1_col2",
+    "text": "THAN USUAL?",
+    "confidence": 0.99684
+  },
+  {
+    "tile": "row1_col2",
+    "text": "HE'S",
+    "confidence": 0.99928
+  },
+  {
+    "tile": "row1_col2",
+    "text": "DOING",
+    "confidence": 0.99991
+  },
+  {
+    "tile": "row1_col2",
+    "text": "IT LOOKS",
+    "confidence": 0.97024
+  },
+  {
+    "tile": "row1_col2",
+    "text": "REALLY",
+    "confidence": 0.99992
+  },
+  {
+    "tile": "row1_col2",
+    "text": "LIKE HE'S",
+    "confidence": 0.99902
+  },
+  {
+    "tile": "row1_col2",
+    "text": "BEEN",
+    "confidence": 0.99993
+  },
+  {
+    "tile": "row1_col2",
+    "text": "WELL.",
+    "confidence": 0.9987
+  },
+  {
+    "tile": "row1_col2",
+    "text": "WORKING",
+    "confidence": 0.99995
+  },
+  {
+    "tile": "row1_col2",
+    "text": "HARD FOR",
+    "confidence": 0.99949
+  },
+  {
+    "tile": "row1_col2",
+    "text": "THE FALL",
+    "confidence": 0.99892
+  },
+  {
+    "tile": "row1_col2",
+    "text": "TOURNAMENT.",
+    "confidence": 0.9873
+  },
+  {
+    "tile": "row1_col2",
+    "text": "\u5927\u8766\u7f8e\u5178",
+    "confidence": 0.55159
+  },
+  {
+    "tile": "row2_col1",
+    "text": "HARD FOR",
+    "confidence": 0.99982
+  },
+  {
+    "tile": "row2_col1",
+    "text": "THE FALL",
+    "confidence": 0.94559
+  },
+  {
+    "tile": "row2_col1",
+    "text": "TOURNAMENT.",
+    "confidence": 0.96644
+  },
+  {
+    "tile": "row2_col1",
+    "text": "ASTRONG",
+    "confidence": 0.79273
+  },
+  {
+    "tile": "row2_col2",
+    "text": "HARD FOR",
+    "confidence": 0.99978
+  },
+  {
+    "tile": "row2_col2",
+    "text": "THEAL",
+    "confidence": 0.59228
+  },
+  {
+    "tile": "row2_col2",
+    "text": "TOURNAMENT.",
+    "confidence": 0.9873
+  },
+  {
+    "tile": "row2_col2",
+    "text": "\u5927\u8766\u7f8e\u5178",
+    "confidence": 0.64705
+  },
+  {
+    "tile": "row2_col2",
+    "text": "SNAP",
+    "confidence": 0.9999
+  },
+  {
+    "tile": "row2_col2",
+    "text": "NO,",
+    "confidence": 0.9987
+  },
+  {
+    "tile": "row2_col2",
+    "text": "THAT'S",
+    "confidence": 0.99965
+  },
+  {
+    "tile": "row2_col2",
+    "text": "NOT IT.",
+    "confidence": 0.98854
+  },
+  {
+    "tile": "row2_col2",
+    "text": "IT'S LIKE",
+    "confidence": 0.99871
+  },
+  {
+    "tile": "row2_col2",
+    "text": "HE'S...",
+    "confidence": 0.99721
+  },
+  {
+    "tile": "row2_col2",
+    "text": "OUT",
+    "confidence": 0.64224
+  },
+  {
+    "tile": "row2_col2",
+    "text": "FOR",
+    "confidence": 0.99997
+  },
+  {
+    "tile": "row2_col2",
+    "text": "BLOOD.",
+    "confidence": 0.99984
+  },
+  {
+    "tile": "row2_col2",
+    "text": "th",
+    "confidence": 0.65642
+  }
+]
