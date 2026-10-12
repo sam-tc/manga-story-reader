@@ -25,6 +25,7 @@ from evaluate_grouping import group_fragments
 from evaluate_panel_reading_order import build_predictions
 from predict import (
     CACHE,
+    DATASET, 
     ROOT,
     read_json,
     read_jsonl,
@@ -32,6 +33,12 @@ from predict import (
 )
 from train_text_filter import features
 
+from evaluate_visual_narration import (
+    detect_caption_rectangles,
+    group_is_in_caption,
+)
+
+from collections import Counter
 
 VISION = ROOT / "experiments/vision_detections"
 VALIDATION = ROOT / "experiments/validation"
@@ -136,6 +143,11 @@ def build_links(sequences, segmentation, baseline):
                 )
 
             regions = vision_page["detections"]
+
+            # Locate potential narration rectangles on this page.
+            image_path = DATASET / relative_path
+            caption_boxes = detect_caption_rectangles(image_path)
+
             page_links = []
 
             for group, prediction in zip(
@@ -163,6 +175,9 @@ def build_links(sequences, segmentation, baseline):
                     "ocr_group_bbox": bbox,
                     "balloon_region_index": balloon,
                     "frame_region_index": frame,
+                    "visual_caption_candidate": group_is_in_caption(
+                        group, caption_boxes
+                    ),
                 })
 
             linked_pages.append(page_links)
@@ -170,6 +185,86 @@ def build_links(sequences, segmentation, baseline):
         links[sid] = linked_pages
 
     return links
+
+
+
+def apply_narration(predictions, links, threshold=0.50):
+    """Assign narration only when visual and text evidence agree."""
+
+    package = joblib.load(
+        ROOT / "models/narration_detector.joblib"
+    )
+
+    model = package["model"]
+    positive_index = list(model.classes_).index(1)
+
+    updated = {}
+    narration_count = 0
+
+    for sid, pages in predictions.items():
+        updated_pages = []
+
+        for page_index, page in enumerate(pages):
+            original_links = links[sid][page_index]
+
+            original_counts = Counter(
+                item["text"] for item in original_links
+            )
+
+            panel_counts = Counter(
+                item["text"] for item in page
+            )
+
+            if original_counts != panel_counts:
+                raise RuntimeError(
+                    f"Text mismatch before narration: {sid}"
+                )
+
+            # Match by text only when it appears exactly once.
+            # Repeated identical text would be ambiguous.
+            visual_candidates = {
+                item["text"]
+                for item in original_links
+                if item["visual_caption_candidate"]
+                and original_counts[item["text"]] == 1
+            }
+
+            texts = [item["text"] for item in page]
+
+            probabilities = (
+                model.predict_proba(texts)[:, positive_index]
+                if texts else []
+            )
+
+            new_page = []
+
+            for item, probability in zip(
+                page, probabilities
+            ):
+                is_narration = (
+                    item["text"] in visual_candidates
+                    and probability >= threshold
+                )
+
+                speaker = (
+                    "NARRATION"
+                    if is_narration
+                    else item["speaker"]
+                )
+
+                if is_narration:
+                    narration_count += 1
+
+                new_page.append({
+                    "speaker": speaker,
+                    "text": item["text"],
+                })
+
+            updated_pages.append(new_page)
+
+        updated[sid] = updated_pages
+
+    return updated, narration_count
 
 
 def main():
@@ -187,13 +282,38 @@ def main():
         default=None,
     )
 
+    parser.add_argument(
+        "--narration",
+        action="store_true",
+        help="Enable experimental narration classification",
+    )    
+
     args = parser.parse_args()
 
-    output = args.output or (
-        VALIDATION / "panel_top_live_predictions.jsonl"
-        if args.split == "val"
-        else ROOT / "submissions/test_predictions_panel.jsonl"
-    )
+    if args.output is not None:
+        output = args.output
+    elif args.split == "val":
+        output = VALIDATION / (
+            "panel_top_narration_predictions.jsonl"
+            if args.narration
+            else "panel_top_live_predictions.jsonl"
+        )
+    else:
+        output = ROOT / "submissions" / (
+            "test_predictions_panel_narration.jsonl"
+            if args.narration
+            else "test_predictions_panel.jsonl"
+        )
+
+    if args.narration:
+        protected_outputs = {
+            (VALIDATION / "panel_top_live_predictions.jsonl").resolve(),
+            (ROOT / "submissions/test_predictions_panel.jsonl").resolve(),
+        }
+        if output.resolve() in protected_outputs:
+            parser.error(
+                "Narration mode cannot overwrite verified predictions"
+            )
 
     protected = (
         ROOT / "submissions/test_predictions.jsonl"
@@ -317,6 +437,18 @@ def main():
             )
 
         print("Panel-top experiment: PASS")
+
+
+    if args.narration:
+        predictions, narration_count = apply_narration(
+            predictions,
+            links,
+            threshold=0.50,
+        )
+
+        print(
+            f"Narration entries assigned: {narration_count}"
+        )        
 
     output.parent.mkdir(
         parents=True,

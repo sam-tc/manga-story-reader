@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "text_order_score": 0.7144961885860459,
+    "balanced_joint_f1": 0.31388851952813335,
+    "speaker_accuracy_on_matched": 0.5259652262389061,
+    "joint_f1": 0.4168510234823789,
+    "matched_token_coverage": 0.7941081092374798
+  },
+  "experiments": [
+    {
+      "threshold": 0.25,
+      "narration_entries": 21,
+      "narration_in_no_narration_sequences": 8,
+      "ambiguous_entries_skipped": 0,
+      "text_order_score": 0.7144961885860459,
+      "balanced_joint_f1": 0.28944085871778635,
+      "delta": -0.024447660810346994
+    },
+    {
+      "threshold": 0.35,
+      "narration_entries": 8,
+      "narration_in_no_narration_sequences": 1,
+      "ambiguous_entries_skipped": 0,
+      "text_order_score": 0.7144961885860459,
+      "balanced_joint_f1": 0.3119763329520588,
+      "delta": -0.0019121865760745593
+    },
+    {
+      "threshold": 0.5,
+      "narration_entries": 2,
+      "narration_in_no_narration_sequences": 0,
+      "ambiguous_entries_skipped": 0,
+      "text_order_score": 0.7144961885860459,
+      "balanced_joint_f1": 0.31685813737246515,
+      "delta": 0.0029696178443318066
+    },
+    {
+      "threshold": 0.6,
+      "narration_entries": 0,
+      "narration_in_no_narration_sequences": 0,
+      "ambiguous_entries_skipped": 0,
+      "text_order_score": 0.7144961885860459,
+      "balanced_joint_f1": 0.31388851952813335,
+      "delta": 0.0
+    }
+  ]
+}
