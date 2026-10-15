@@ -324,6 +324,16 @@ def main():
             "Refusing to overwrite the original submission"
         )
 
+    selected_output = (
+        ROOT / "submissions/test_predictions_panel.jsonl"
+    ).resolve()
+
+    if output.resolve() == selected_output and selected_output.exists():
+        parser.error(
+            "Refusing to overwrite the verified panel submission. "
+            "Use --output with a different filename."
+        )
+
     sequences = select_sequences(args.split)
 
     expected_ids = [

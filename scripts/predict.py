@@ -99,6 +99,17 @@ def main():
                 "pipeline_predictions.jsonl"
             )
 
+    protected_outputs = {
+        (ROOT / "submissions/test_predictions.jsonl").resolve(),
+        (ROOT / "submissions/test_predictions_panel.jsonl").resolve(),
+    }
+
+    if output_path.resolve() in protected_outputs:
+        parser.error(
+            "Refusing to overwrite a verified submission. "
+            "Use --output with a different filename."
+        )
+
     # Load our locally trained model.
     package = joblib.load(
         ROOT / "models/text_filter.joblib"
