@@ -96,10 +96,22 @@ def main():
     )
     parser.add_argument("--limit", type=int, default=None,
                         help="Process only this many sequences for a smoke test")
-    parser.add_argument("--device", default="mps", help="mps or cpu")
+    parser.add_argument("--device", default="auto", help="auto, mps, cpu, or CUDA device")
     parser.add_argument("--conf", type=float, default=0.25)
     parser.add_argument("--imgsz", type=int, default=768)
     args = parser.parse_args()
+
+    if args.device == "auto":
+        import torch
+
+        if torch.backends.mps.is_available():
+            args.device = "mps"
+        elif torch.cuda.is_available():
+            args.device = "0"
+        else:
+            args.device = "cpu"
+
+    print(f"Vision inference device: {args.device}")
 
     selected = select_sequences(args.split)
     if args.limit is not None:
