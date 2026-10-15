@@ -16,8 +16,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 VAL = ROOT / "experiments" / "validation"
 VISION = ROOT / "experiments" / "vision_detections"
-sys.path.insert(0, str(ROOT / "dataset"))
-import score  # Official BYTE task scorer
 
 
 def read_json(path):
@@ -154,6 +152,9 @@ def build_predictions(baseline, links, segmentation, mode):
 
 
 def main():
+    sys.path.insert(0, str(ROOT / "dataset"))
+    import score  # Evaluation only
+
     paths = [
         VAL / "validation_references.jsonl",
         VAL / "pipeline_predictions.jsonl",

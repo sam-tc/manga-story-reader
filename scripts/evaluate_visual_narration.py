@@ -17,8 +17,6 @@ from predict import CACHE, DATASET, ROOT, read_json, read_jsonl, select_sequence
 from train_text_filter import features
 
 VAL = ROOT / "experiments" / "validation"
-sys.path.insert(0, str(DATASET))
-import score  # noqa: E402
 
 
 def detect_caption_rectangles(image_path):
@@ -113,6 +111,8 @@ def write_jsonl(path, rows):
 
 def narration_coverage(references, predictions):
     """Diagnostic: amount of reference narration aligned and correctly labeled."""
+    sys.path.insert(0, str(DATASET))
+    import score
     total_gold_tokens = 0
     aligned_narration = 0.0
     correctly_labeled = 0.0
@@ -135,6 +135,9 @@ def narration_coverage(references, predictions):
 
 
 def main():
+    sys.path.insert(0, str(DATASET))
+    import score
+
     package = joblib.load(ROOT / "models/text_filter.joblib")
     model = package["model"]
     vectorizer = package["vectorizer"]
